@@ -85,36 +85,16 @@ public class Cart {
     // Utils
 
     public double calculateTotalAmount() {
-        double totalAmountBeforeDiscount = totalPrice + icms + municipalTax + shippingCost;
-        double totalAmountAfterDiscount = totalAmountBeforeDiscount - discount;
-
-        double cashbackBalance = 0.0;
-
-        if (client.getClientType() == EClientType.PRIME && paymentMethod != EPaymentMethod.CASHBACK) {
-            cashbackBalance += calculateCashback(totalAmountAfterDiscount);
-        } else if (client.getClientType() != EClientType.PRIME && paymentMethod == EPaymentMethod.CASHBACK) {
-            cashbackBalance += calculateCashback(totalAmountAfterDiscount);
-        }
-
-        return totalAmountAfterDiscount + cashbackBalance;
+        TotalAmountCalculator calculator = new TotalAmountCalculator(this);
+        return calculator.calculate();
     }
 
     private double calculateDiscount(String card) {
-        double initialDiscount = 0.0;
-        double realValueWithTaxes = totalPrice + icms + municipalTax;
-
-        if (client.getClientType() == EClientType.ESPECIAL) {
-            initialDiscount += realValueWithTaxes * 0.10;
-        }
-
-        if (paymentMethod == EPaymentMethod.CREDITCARD && isStoreCard(card)) {
-            initialDiscount += realValueWithTaxes * 0.10;
-        }
-
-        return initialDiscount;
+        DiscountCalculator discountCalculator = new DiscountCalculator(client, totalPrice, icms, municipalTax, paymentMethod);
+        return discountCalculator.calculate(card);
     }
 
-    private double calculateCashback(double totalAmountAfterDiscount) {
+    double calculateCashback(double totalAmountAfterDiscount) {
         double cashbackPercentage = (client.getClientType() == EClientType.PRIME) ? 0.05 : 0.03;
         double cashbackValue = totalAmountAfterDiscount * cashbackPercentage;
 
